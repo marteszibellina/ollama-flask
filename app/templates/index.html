@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Форумный чат с ИИ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/styles/github.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.7.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/4.2.12/marked.min.js"></script>
+</head>
+<body>
+    <div class="forum-container">
+        <div id="chat-history" class="forum-history"></div>
+        <div class="forum-input">
+            <textarea id="user-input" placeholder="Введите сообщение... (Ctrl+Enter для отправки, Enter для переноса строки)"></textarea>
+            <button id="send-button">Отправить (Ctrl+Enter)</button>
+            <button id="clear-button">Очистить историю</button>
+        </div>
+    </div>
+    
+    <script>
+        hljs.highlightAll();
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatHistory = document.getElementById('chat-history');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+            const clearButton = document.getElementById('clear-button');
+            
+            function renderMarkdown(text) {
+                return marked.parse(text, {
+                    breaks: true,
+                    highlight: function(code, lang) {
+                        const language = hljs.getLanguage(lang) ? lang : 'plaintext';
+                        return hljs.highlight(code, { language }).value;
+                    }
+                });
+            }
+            
+            function addMessage(text, sender) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `forum-message ${sender}`;
+                messageDiv.innerHTML = renderMarkdown(text);
+                chatHistory.appendChild(messageDiv);
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                hljs.highlightAll();
+            }
+            
+            fetch('/history')
+                .then(response => response.json())
+                .then(data => {
+                    if (data.history) {
+                        data.history.forEach(msg => {
+                            addMessage(msg.user, 'user');
+                            addMessage(msg.ai, 'ai');
+                        });
+                    }
+                });
+            
+            function sendMessage() {
+                const message = userInput.value.trim();
+                if (!message) return;
+                
+                addMessage(message, 'user');
+                userInput.value = '';
+                
+                fetch('/chat', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({message: message})
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage(data.response, 'ai');
+                })
+                .catch(error => {
+                    addMessage(`Ошибка: ${error.message}`, 'error');
+                });
+            }
+            
+            function clearHistory() {
+                fetch('/clear', {
+                    method: 'POST'
+                })
+                .then(() => {
+                    chatHistory.innerHTML = '';
+                });
+            }
+            
+            sendButton.addEventListener('click', sendMessage);
+            clearButton.addEventListener('click', clearHistory);
+            
+            userInput.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && e.ctrlKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
