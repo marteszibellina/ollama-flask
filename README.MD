@@ -22,8 +22,8 @@ The interface is in Russian, but I'm sure you'll handle it.
 ### _Installation_
 1. Clone this rep:
     ```bash
-    git clone <repository-url>
-    cd <repository-folder>
+    git clone https://github.com/marteszibellina/ollama-flask
+    cd ollama-flask/
     ```
 2. Install Virtual Environment.
 
