@@ -12,7 +12,7 @@ from datetime import datetime
 from typing import Dict, List, Optional
 
 import ollama
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request, render_template, session
 
 from app import db
 from app.models import Conversation
