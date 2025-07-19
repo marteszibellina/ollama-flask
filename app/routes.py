@@ -8,6 +8,7 @@ App: ~/Dev/Ollama/ollama-flask/app/routes.py
 
 import json
 import logging
+import uuid
 from datetime import datetime
 from typing import Dict, List, Optional
 
